@@ -7,6 +7,9 @@ name = "pypi"
 numpy = "*"
 merkletools = {editable = true, path = "./pymerkletools"}
 pysha3 = "*"
+web3 = {extras = ["tester"], version = "*"}
+eth-abi = "*"
+py-solc-x = "*"
 
 [dev-packages]
 pylint = "*"
