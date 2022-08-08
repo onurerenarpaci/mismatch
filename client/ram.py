@@ -1,6 +1,6 @@
 import numpy as np
 import enum
-import utils
+import client.utils as utils
 
 class OpCode(enum.IntEnum):
     LOAD = 1
@@ -87,11 +87,11 @@ class Ram():
 
     def copy_id(self, args, store_mt):
         rs = self.store[self.store[args[0]]]
-        args_values = [self.store[args[0]], rs, self.store[args[1]]]
+        args_values = [self.store[args[0]], self.store[args[1]], rs]
         args_proofs = [
             utils.translate_proof(store_mt, args[0]),
-            utils.translate_proof(store_mt, self.store[args[0]]),
-            utils.translate_proof(store_mt, args[1])
+            utils.translate_proof(store_mt, args[1]),
+            utils.translate_proof(store_mt, self.store[args[0]])
             ]
         
         self.store[args[1]] = rs

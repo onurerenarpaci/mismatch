@@ -15,35 +15,32 @@ def translate_proof(mt_ins, x):
         else:
             res_proof.append('0x' + p['right'])
             res_bool.append(True)
-    return root, leaf, res_proof, res_bool
+    return {"root":root, "leaf":leaf, "arr":res_proof, "pos":res_bool}
 
-def hash_op(op):
-    combined = [0, 0, 0, 0]
-    combined[0] = op['OpCode']
-    combined[1:len(op['args'])+1] = op['args']
-    
-    return bytes(Web3.solidityKeccak(['int32', 'int32', 'int32', 'int32'], combined)).hex()
+def hash_op(PC, op):
+    raw = [PC, int(op['OpCode']), op['args']]
+    return bytes(Web3.solidityKeccak(['int32', 'int32', 'int32[]'], raw)).hex()
 
 def code_mt(codes):
     mt = merkletools.MerkleTools(hash_type="keccak_256")
-    leaves = list(map(hash_op, codes))
+    leaves = [hash_op(PC, op) for PC, op in enumerate(codes)]
     mt.add_leaf(leaves)
     mt.make_tree()
     return mt
 
-def make_store_leaf(x):
-    return sha3.keccak_256(encode_abi(['int32'], [x.item()])).hexdigest()
+def make_store_leaf(idx, x):
+    return bytes(Web3.solidityKeccak(['int32', 'int32'], [idx, x.item()])).hex()
 
 def store_mt(store):
     mt = merkletools.MerkleTools(hash_type="keccak_256")
-    leaves = list(map(make_store_leaf, store))
+    leaves = [make_store_leaf(idx, x) for idx, x in enumerate(store)]
     mt.add_leaf(leaves)
     mt.make_tree()
     return mt
 
 def hash_rc(rc):
-    raw = [rc['PC'], int(rc['OpCode']), rc['args'], sterilize_ints(rc['args_values']), rc['store_mt_root']]
-    return bytes(Web3.solidityKeccak(['int32', 'int32', 'int32[]', 'int32[]', 'bytes32'], raw)).hex()
+    raw = [rc['PC'], int(rc['OpCode']), rc['args'], rc['store_mt_root']]
+    return bytes(Web3.solidityKeccak(['int32', 'int32', 'int32[]', 'bytes32'], raw)).hex()
 
 def sterilize_ints(ints):
     return list(map(lambda x: x if (type(x) is int) else x.item(), ints))
