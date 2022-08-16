@@ -1,7 +1,7 @@
 pragma solidity ^0.8.7;
 pragma abicoder v2;
 
-struct MissmatchInstance {
+struct MismatchInstance {
     uint256 s;
     bytes32[2] z;
     uint256 low;
@@ -38,8 +38,8 @@ struct committed_step_params{
 
 enum req_type {MIDDLE, COMMITTED_STEP, NONE}
 
-contract Missmatch {
-    mapping(bytes32 => MissmatchInstance) public state;
+contract Mismatch {
+    mapping(bytes32 => MismatchInstance) public state;
 
     uint32 constant deadline_duration = 5;
 
@@ -82,8 +82,8 @@ contract Missmatch {
     {
         bool _res; 
         req_type _req; 
-        MissmatchInstance memory _res_state;
-        (_res, _req, _res_state) = MissmatchLib.send_rc_proof(rc_proof, state[key], msg.sender);
+        MismatchInstance memory _res_state;
+        (_res, _req, _res_state) = MismatchLib.send_rc_proof(rc_proof, state[key], msg.sender);
 
         state[key] = _res_state;
         
@@ -112,8 +112,8 @@ contract Missmatch {
     {
         committed_step_params memory params = committed_step_params(PC, OpCode, args, args_values, args_proof, store_mt_root, nextOpCode, nextArgs, next_op_proof);
         bool _res; 
-        MissmatchInstance memory _res_state;
-        (_res, _res_state) = MissmatchLib.send_committed_step(params, state[key], msg.sender);
+        MismatchInstance memory _res_state;
+        (_res, _res_state) = MismatchLib.send_committed_step(params, state[key], msg.sender);
 
         state[key] = _res_state;
 
@@ -122,9 +122,9 @@ contract Missmatch {
 
     function report(bytes32 key) public returns(bool){
         bool _res;
-        MissmatchInstance memory _res_state;
+        MismatchInstance memory _res_state;
 
-        (_res, _res_state) = MissmatchLib.report(state[key]);
+        (_res, _res_state) = MismatchLib.report(state[key]);
 
         if(_res){
             state[key] = _res_state;
@@ -143,15 +143,15 @@ contract Missmatch {
 
 } 
 
-library MissmatchLib {
+library MismatchLib {
 
     uint32 constant deadline_duration = 5;
 
     function send_rc_proof(
         proof memory rc_proof,
-        MissmatchInstance memory state,
+        MismatchInstance memory state,
         address sender
-    ) public view returns(bool res, req_type req, MissmatchInstance memory res_state)
+    ) public view returns(bool res, req_type req, MismatchInstance memory res_state)
     {
         uint8 sender_idx;
         uint8 other_idx;
@@ -208,9 +208,9 @@ library MissmatchLib {
 
     function send_committed_step(
         committed_step_params memory params,
-        MissmatchInstance memory state,
+        MismatchInstance memory state,
         address sender
-    ) public pure returns(bool res, MissmatchInstance memory res_state)
+    ) public pure returns(bool res, MismatchInstance memory res_state)
     {
         uint8 sender_idx;
         uint8 other_idx;
@@ -327,7 +327,7 @@ library MissmatchLib {
 
     }
 
-    function report(MissmatchInstance memory state) public view returns(bool res, MissmatchInstance memory res_state)
+    function report(MismatchInstance memory state) public view returns(bool res, MismatchInstance memory res_state)
     {
         if (block.number <= state.deadline || state.alg_state != 1){
             return (false, state);
@@ -403,9 +403,9 @@ library MissmatchLib {
     }
 }
 
-contract MissmatchResolve {
+contract MismatchResolve {
 
-    address payable missmatch_address;
+    address payable mismatch_address;
 
     struct resolution {
         address[][] response;
@@ -425,8 +425,8 @@ contract MissmatchResolve {
 
     mapping(bytes32 => resolution) state;
 
-    constructor(address payable _missmatch_address) {
-        missmatch_address = _missmatch_address;
+    constructor(address payable _mismatch_address) {
+        mismatch_address = _mismatch_address;
     }
 
     function start_resolution(
@@ -456,9 +456,9 @@ contract MissmatchResolve {
         address _ci_address = _response[0][0];
         address _cj_address = _response[1][0];
 
-        Missmatch missmatch = Missmatch(missmatch_address);
+        Mismatch mismatch = Mismatch(mismatch_address);
 
-        missmatch.start_committed_bs(
+        mismatch.start_committed_bs(
             state[resolution_id].current_s,
             _response_z[0],
             _response_z[1],
@@ -470,7 +470,7 @@ contract MissmatchResolve {
         state[resolution_id].initialized = true;
     }
 
-    function on_missmatch_result(
+    function on_mismatch_result(
         bytes32 _resolution_id
     ) public
     {
@@ -492,15 +492,15 @@ contract MissmatchResolve {
             cur_response_c, 
             cur_state.code_mt_root));
 
-        Missmatch missmatch = Missmatch(missmatch_address);
-        address winner = missmatch.get_winner(key);
+        Mismatch mismatch = Mismatch(mismatch_address);
+        address winner = mismatch.get_winner(key);
 
         require(winner != address(0));
 
         if (winner == cur_response_c){
             if (cur_state.i < (resulting_response.length - 1)){
                 cur_state.i += 1;
-                init_missmatch(resolution_id);
+                init_mismatch(resolution_id);
                 return;
             }
             else {
@@ -517,14 +517,14 @@ contract MissmatchResolve {
                 cur_state.current_s = min(
                     cur_state.response_s[cur_state.resulting_response_idx], 
                     cur_state.response_s[cur_state.current_response_idx]);
-                init_missmatch(resolution_id);
+                init_mismatch(resolution_id);
                 return;
             }
         }
         else if (winner == resulting_response_c){
             if (cur_state.j < (cur_response.length - 1)){
                 cur_state.j += 1;
-                init_missmatch(resolution_id);
+                init_mismatch(resolution_id);
                 return;
             }
             else {
@@ -540,7 +540,7 @@ contract MissmatchResolve {
                 cur_state.current_s = min(
                     cur_state.response_s[cur_state.resulting_response_idx], 
                     cur_state.response_s[cur_state.current_response_idx]);
-                init_missmatch(resolution_id);
+                init_mismatch(resolution_id);
                 return;                
             }
         }
@@ -553,16 +553,16 @@ contract MissmatchResolve {
         return a <= b ? a : b;
     }
 
-    function init_missmatch(bytes32 resolution_id) internal {
+    function init_mismatch(bytes32 resolution_id) internal {
         resolution storage cur_state = state[resolution_id];
         address[] storage resulting_response = cur_state.response[cur_state.resulting_response_idx];
         address[] storage cur_response = cur_state.response[cur_state.current_response_idx];
         address resulting_response_c = resulting_response[cur_state.i];
         address cur_response_c = cur_response[cur_state.j];
 
-        Missmatch missmatch = Missmatch(missmatch_address);
+        Mismatch mismatch = Mismatch(mismatch_address);
 
-        missmatch.start_committed_bs(
+        mismatch.start_committed_bs(
             cur_state.current_s,
             cur_state.response_z[cur_state.resulting_response_idx],
             cur_state.response_z[cur_state.current_response_idx],
