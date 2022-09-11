@@ -174,3 +174,62 @@ class RamCoder():
             "args": []
         })
 
+class Ram_simple():
+    def __init__(self, source):
+        self.store = np.zeros(source['size'], dtype=np.int32)
+        self.code = source['code']
+        self.PC = 0
+    
+    def __call__(self):
+        while (self.code[self.PC]['OpCode'] != OpCode.END):
+            op_code = self.code[self.PC]['OpCode']
+            args = self.code[self.PC]['args']
+
+            if op_code == OpCode.LOAD:
+                self.load(args)
+            elif op_code == OpCode.ADD:
+                self.add(args)
+            elif op_code == OpCode.SUB:
+                self.sub(args)
+            elif op_code == OpCode.COPYID:
+                self.copy_id(args)
+            elif op_code == OpCode.COPYDI:
+                self.copy_di(args)
+            elif op_code == OpCode.JNZ:
+                self.jnz(args)
+            
+    
+    def load(self, args ):
+        self.store[args[1]] = args[0]
+        self.PC = self.PC + 1
+    
+    def add(self, args ):
+        rs1 = self.store[args[0]]
+        rs2 = self.store[args[1]]       
+        self.store[args[2]] = rs1 + rs2
+        self.PC = self.PC + 1
+
+    def sub(self, args ):
+        rs1 = self.store[args[0]]
+        rs2 = self.store[args[1]]        
+        self.store[args[2]] = rs1 - rs2
+        self.PC = self.PC + 1
+
+    def copy_id(self, args ):
+        rs = self.store[self.store[args[0]]]       
+        self.store[args[1]] = rs
+        self.PC = self.PC + 1
+   
+    def copy_di(self, args ):
+        rs = self.store[args[0]]
+        self.store[self.store[args[1]]] = rs
+        self.PC = self.PC + 1
+  
+    def jnz(self, args ):
+        if self.store[args[0]] > 0:
+            self.PC = args[1]
+        else:
+            self.PC = self.PC + 1
+
+
+

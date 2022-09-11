@@ -77,3 +77,9 @@ def reduced_config_mt(rc):
     mt.add_leaf(leaves)
     mt.make_tree()
     return mt
+
+def calculate_key(s, zi, zj, ci_address, cj_address, code_mt_root):
+
+    raw = [s, zi, zj, ci_address, cj_address, code_mt_root]
+
+    return bytes(Web3.solidityKeccak(['uint256', 'bytes32', 'bytes32', 'address', 'address', 'bytes32'], raw)).hex()
